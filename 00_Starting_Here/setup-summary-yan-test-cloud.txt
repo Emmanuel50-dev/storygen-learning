@@ -1,0 +1,43 @@
+# StoryGen CI/CD Setup Summary for Project: yan-test-cloud
+# Generated on Sun Oct 26 07:33:51 AM UTC 2025
+
+## Resources Created
+- Workload Identity Pool: github-pool
+- Workload Identity Provider: github-provider-fixed
+- Service Account: github-actions@yan-test-cloud.iam.gserviceaccount.com  
+- Storage Bucket: yan-test-cloud_cloudbuild
+- Secret Manager: storygen-google-api-key
+
+## GitHub Repository Secrets
+Add at: https://github.com/Emmanuel50-dev/storygen-learning/settings/secrets/actions
+
+WORKLOAD_IDENTITY_PROVIDER:
+projects/124584546981/locations/global/workloadIdentityPools/github-pool/providers/github-provider-fixed
+
+GCP_SERVICE_ACCOUNT_EMAIL:
+github-actions@yan-test-cloud.iam.gserviceaccount.com
+
+GOOGLE_API_KEY:
+(Get from https://aistudio.google.com/)
+
+## GitHub Repository Variables  
+Add at: https://github.com/Emmanuel50-dev/storygen-learning/settings/variables/actions
+
+GCP_PROJECT_ID: yan-test-cloud
+GCP_REGION: us-central1
+ARTIFACT_REPO: storygen-repo
+BACKEND_SERVICE_NAME: genai-backend
+FRONTEND_SERVICE_NAME: genai-frontend
+BUCKET_NAME: yan-test-cloud_cloudbuild
+SECRET_NAME: storygen-google-api-key
+
+## Next Steps
+1. Add above secrets and variables to GitHub
+2. Get Gemini API key: https://aistudio.google.com/
+3. Add API key to Secret Manager:
+   echo 'YOUR_API_KEY' | gcloud secrets versions add storygen-google-api-key --data-file=- --project=yan-test-cloud
+4. Add same API key as GOOGLE_API_KEY in GitHub
+5. Push to main branch - CI/CD will deploy automatically
+
+## Validation
+Run: ./validate-workload-identity.sh
