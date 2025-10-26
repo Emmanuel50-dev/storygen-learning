@@ -1,46 +1,28 @@
-
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status.
+# Exit on error
 set -e
 
-# --- Configuration ---
-PROJECT_ID=$(gcloud config get-value project)
-SERVICE_NAME="storygen-frontend"
-REGION="us-central1" # Change to your preferred region
+# Usage: ./deploy-frontend.sh [staging|production]
 
-if [ -z "$PROJECT_ID" ]; then
-    echo "🔴 Error: Google Cloud project ID not found."
-    echo "Please set your project using 'gcloud config set project YOUR_PROJECT_ID'"
-    exit 1
+# Get the environment from the first argument
+ENV=$1
+
+if [ -z "$ENV" ]; then
+  echo "Usage: ./deploy-frontend.sh [staging|production]"
+  exit 1
 fi
 
-echo "▶️  Starting frontend deployment to project '$PROJECT_ID' in region '$REGION'..."
+# Set environment-specific variables
+if [ "$ENV" == "staging" ]; then
+  BACKEND_URL="http://storygen-backend-staging-url.com"
 
-# --- 1. Enable APIs ---
-echo "✅ Enabling required Google Cloud services..."
-gcloud services enable run.googleapis.com \
-    cloudbuild.googleapis.com \
-    artifactregistry.googleapis.com \
-    --project="$PROJECT_ID"
+elif [ "$ENV" == "production" ]; then
+  BACKEND_URL="http://storygen-backend-production-url.com"
+else
+  echo "Invalid environment. Use 'staging' or 'production'."
+  exit 1
+fi
 
-# --- 2. Build Docker Image with Cloud Build ---
-echo "🔨 Building Docker image with Cloud Build..."
-gcloud builds submit --tag "gcr.io/$PROJECT_ID/$SERVICE_NAME" --project="$PROJECT_ID"
-
-# --- 3. Deploy to Cloud Run ---
-echo "🚀 Deploying to Cloud Run..."
-gcloud run deploy "$SERVICE_NAME" \
-    --image="gcr.io/$PROJECT_ID/$SERVICE_NAME" \
-    --platform="managed" \
-    --region="$REGION" \
-    --allow-unauthenticated \
-    --project="$PROJECT_ID"
-
-# --- 4. Get Service URL ---
-SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --platform="managed" --region="$REGION" --format="value(status.url)" --project="$PROJECT_ID")
-
-echo "----------------------------------------"
-echo "✅ Frontend deployment successful!"
-echo "🚀 Service URL: $SERVICE_URL"
-echo "----------------------------------------" 
+# Submit the build to Google Cloud Build
+gcloud builds submit --config cloudbuild.yaml --substitutions=_BACKEND_URL=$BACKEND_URL

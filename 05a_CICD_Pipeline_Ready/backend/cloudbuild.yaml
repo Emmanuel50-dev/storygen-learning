@@ -1,13 +1,8 @@
+
 steps:
 # Build the Docker image
 - name: 'gcr.io/cloud-builders/docker'
-  args:
-  - 'build'
-  - '--build-arg'
-  - 'NEXT_PUBLIC_BACKEND_URL=${_BACKEND_URL}'
-  - '-t'
-  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
-  - '.'
+  args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA', '.']
 
 # Push the Docker image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
@@ -28,14 +23,20 @@ steps:
   - 'managed'
   - '--allow-unauthenticated'
 
+# Set environment variables for the Cloud Run service
+  - '--update-env-vars'
+  - 'FRONTEND_URL=$_FRONTEND_URL,GOOGLE_API_KEY=$_GOOGLE_API_KEY,GOOGLE_CLOUD_PROJECT_ID=$_GOOGLE_CLOUD_PROJECT_ID'
+
 images:
 - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
 
 substitutions:
-  _SERVICE_NAME: 'storygen-frontend'
+  _SERVICE_NAME: 'storygen-backend'
   _REGION: 'us-central1'
   _REPO_NAME: 'storygen-repo'
-  _BACKEND_URL: 'http://localhost:8000' # Default value, can be overridden
+  _FRONTEND_URL: 'http://localhost:3000' # Default value, can be overridden
+  _GOOGLE_API_KEY: '' # Default value, should be set via build triggers
+  _GOOGLE_CLOUD_PROJECT_ID: '' # Default value, should be set via build triggers
 
 options:
   logging: CLOUD_LOGGING_ONLY
